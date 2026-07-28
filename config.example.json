@@ -1,0 +1,101 @@
+{
+  "host": "0.0.0.0",
+  "port": 8409,
+
+  "_public_url": "Set this only if Jellyfin cannot reach you at the Host header it sends, e.g. behind a reverse proxy or in Docker. Rename to public_url to use.",
+
+  "seed": "faketv",
+  "guide_days": 5,
+  "guide_past_hours": 12,
+
+  "_tuner_count": "Maximum channels streaming at once; 0 means unlimited. Set it low to test how clients handle 'all tuners in use'.",
+  "tuner_count": 0,
+  "stream_linger_seconds": 15,
+  "program_images": true,
+
+  "video": {
+    "width": 1280,
+    "height": 720,
+    "fps": 30,
+    "pattern": "testsrc2",
+    "bitrate": "3000k",
+    "preset": "veryfast",
+    "gop_seconds": 1.0
+  },
+
+  "audio": {
+    "bitrate": "128k",
+    "sample_rate": 48000,
+    "channels": 2,
+    "volume": 0.12,
+    "_mode": "tone | beep | silence",
+    "mode": "tone"
+  },
+
+  "channels": [
+    {
+      "id": "fake1",
+      "number": "1.1",
+      "name": "Fake One HD",
+      "profile": "general",
+      "group": "Fake TV",
+      "color": "0x1b5e9c",
+      "tone": 440
+    },
+    {
+      "id": "fake2",
+      "number": "2.1",
+      "name": "Fake News 24",
+      "profile": "news",
+      "group": "Fake TV",
+      "color": "0xb02a2a",
+      "tone": 523,
+      "width": 1920,
+      "height": 1080,
+      "pattern": "smptehdbars"
+    },
+    {
+      "id": "fake3",
+      "number": "3.1",
+      "name": "Fake Movies",
+      "profile": "movies",
+      "group": "Fake TV",
+      "color": "0x3d2a6b",
+      "tone": 349,
+      "width": 1920,
+      "height": 1080
+    },
+    {
+      "id": "fake4",
+      "number": "4.1",
+      "name": "Fake Sports",
+      "profile": "sports",
+      "group": "Fake TV",
+      "color": "0x1f7a3d",
+      "tone": 659
+    },
+    {
+      "id": "fake5",
+      "number": "5.1",
+      "name": "Fake Kids",
+      "profile": "kids",
+      "group": "Fake TV",
+      "color": "0xc7761b",
+      "tone": 784,
+      "width": 854,
+      "height": 480
+    },
+    {
+      "id": "fake6",
+      "number": "6.1",
+      "name": "Fake Retro",
+      "profile": "retro",
+      "group": "Fake TV",
+      "color": "0x4a4a4a",
+      "tone": 294,
+      "width": 640,
+      "height": 480,
+      "pattern": "smptebars"
+    }
+  ]
+}
