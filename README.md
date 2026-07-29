@@ -9,19 +9,7 @@ that's supposedly airing, and a running clock burned into the picture — so you
 can tell at a glance which channel a client actually tuned to, and how far
 behind live it is.
 
-```
-┌─────────────────────────────────────┐
-│  2.1  Fake News 24                  │
-│                                     │
-│        [ ffmpeg test pattern ]      │
-│                                     │
-│  Now:  Broadcast Standards Weekly   │
-│        20:00 - 20:30 UTC            │
-│  Next: The Bulletin That Isn't      │
-│  UTC 2026-07-28 20:04:05            │
-│  2026-07-28 16:04:05                │
-└─────────────────────────────────────┘
-```
+![Testsource example image.](https://raw.githubusercontent.com/iwalton3/mpv-shim-misc-docs/refs/heads/master/images/testsrc.png)
 
 Requirements: Python 3.10+ and `ffmpeg` (with `libx264` and `libfreetype`).
 No Python packages to install — it's all standard library.
