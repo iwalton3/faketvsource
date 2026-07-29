@@ -305,10 +305,11 @@ class Handler(BaseHTTPRequestHandler):
             size = f"{channel.width or config.video.width}x{channel.height or config.video.height}"
             rows.append(
                 "<tr>"
-                f'<td><img src="/logo/{escape(channel.id)}.png" alt=""></td>'
+                f'<td><img class=logo src="/logo/{escape(channel.id)}.png" alt=""></td>'
                 f"<td class=num>{escape(channel.number)}</td>"
                 f"<td><strong>{escape(channel.name)}</strong><br>"
-                f"<span class=dim>{escape(channel.id)} &middot; {escape(channel.profile)} &middot; {size}</span></td>"
+                f"<span class=dim>{escape(channel.id)} &middot; {escape(channel.profile)} &middot; {size}"
+                f" &middot; {escape(channel.logo_style)} logo</span></td>"
                 f"<td>{escape(current.title) if current else '&mdash;'}"
                 f"<br><span class=dim>{f'{current.start:%H:%M}-{current.stop:%H:%M} UTC' if current else ''}</span></td>"
                 f"<td>{escape(upcoming.title) if upcoming else '&mdash;'}</td>"
@@ -339,6 +340,17 @@ class Handler(BaseHTTPRequestHandler):
  th, td {{ text-align: left; padding: .5rem .6rem; border-bottom: 1px solid rgba(128,128,128,.3); vertical-align: top; }}
  th {{ font-size: .8rem; text-transform: uppercase; letter-spacing: .04em; opacity: .6; }}
  img {{ width: 44px; height: 44px; border-radius: 6px; display: block; }}
+ /* Most of the logos are transparent, half of them with black text and half
+    with white, so a surface that is either colour hides one of them. This one
+    is a mid-tone alpha checker, which is what a client ought to be doing. */
+ img.logo {{
+   background-color: #808080;
+   background-image:
+     linear-gradient(45deg, #6f6f6f 25%, transparent 25%, transparent 75%, #6f6f6f 75%),
+     linear-gradient(45deg, #6f6f6f 25%, transparent 25%, transparent 75%, #6f6f6f 75%);
+   background-size: 14px 14px;
+   background-position: 0 0, 7px 7px;
+ }}
  code {{ font-size: .9em; word-break: break-all; }}
  .num {{ font-variant-numeric: tabular-nums; white-space: nowrap; }}
  .dim {{ opacity: .6; font-size: .85em; }}
@@ -350,6 +362,10 @@ class Handler(BaseHTTPRequestHandler):
 <table><tbody>{url_rows}</tbody></table>
 
 <h2>Channels</h2>
+<p class=dim>Logos are deliberately awkward: most have a transparent background,
+some with white text and some with black, so a client that composites them onto
+the wrong colour ends up with an invisible logo. They are shown here on a
+mid-tone checker, where every style stays legible.</p>
 <table>
 <thead><tr><th></th><th>No.</th><th>Channel</th><th>Now</th><th>Next</th><th></th></tr></thead>
 <tbody>{''.join(rows)}</tbody></table>

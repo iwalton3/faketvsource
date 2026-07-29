@@ -28,6 +28,42 @@ class ConfigError(Exception):
 
 
 @dataclass(frozen=True)
+class LogoStyle:
+    """How a channel logo is painted.
+
+    Real broadcaster logos are PNGs with an alpha channel and no idea what
+    they will be drawn on top of; plenty of them are a wordmark in flat white
+    or flat black with nothing behind it. A client that drops the alpha onto
+    the wrong colour, or that assumes a logo brings its own background, ends up
+    with an invisible logo on one theme and a legible one on the other — which
+    is exactly the accessibility bug worth catching. So the lineup ships
+    logos that are unkind on purpose rather than logos that always work.
+    """
+
+    # lavfi colour for the background, or "channel" for the channel's accent.
+    fill: str
+    # Background opacity. 0.0 is fully transparent, which is the hostile case.
+    alpha: float
+    # drawtext fontcolor for every line of text.
+    text: str
+
+
+LOGO_STYLES: dict[str, LogoStyle] = {
+    # The well-behaved control: opaque background, text that contrasts with it.
+    "solid": LogoStyle(fill="channel", alpha=1.0, text="white"),
+    # Vanishes on a light background.
+    "light-on-transparent": LogoStyle(fill="black", alpha=0.0, text="white"),
+    # Vanishes on a dark background.
+    "dark-on-transparent": LogoStyle(fill="black", alpha=0.0, text="black"),
+    # Partial alpha: catches clients that treat the alpha channel as a 1-bit
+    # mask, or that flatten onto black before scaling.
+    "translucent": LogoStyle(fill="channel", alpha=0.35, text="white"),
+}
+
+DEFAULT_LOGO_STYLE = "solid"
+
+
+@dataclass(frozen=True)
 class Channel:
     """One fake channel."""
 
@@ -38,6 +74,8 @@ class Channel:
     group: str = "Fake TV"
     # Accent colour used for the logo and the on-screen channel bug.
     color: str = "0x1b5e9c"
+    # One of LOGO_STYLES. The default lineup spreads these deliberately.
+    logo_style: str = DEFAULT_LOGO_STYLE
     # Audio test tone, in Hz. Giving each channel its own pitch makes it
     # obvious by ear when a client tunes to the wrong stream.
     tone: int = 440
@@ -111,6 +149,7 @@ DEFAULT_CHANNELS = (
         name="Fake One HD",
         profile="general",
         color="0x1b5e9c",
+        logo_style="light-on-transparent",
         tone=440,
     ),
     Channel(
@@ -119,6 +158,7 @@ DEFAULT_CHANNELS = (
         name="Fake News 24",
         profile="news",
         color="0xb02a2a",
+        logo_style="dark-on-transparent",
         tone=523,
         width=1920,
         height=1080,
@@ -130,6 +170,7 @@ DEFAULT_CHANNELS = (
         name="Fake Movies",
         profile="movies",
         color="0x3d2a6b",
+        logo_style="translucent",
         tone=349,
         width=1920,
         height=1080,
@@ -140,7 +181,11 @@ DEFAULT_CHANNELS = (
         name="Fake Sports",
         profile="sports",
         color="0x1f7a3d",
+        logo_style="dark-on-transparent",
         tone=659,
+        # The original testsrc, not testsrc2: different colours, and its own
+        # frame counter burned in, which is a second opinion on the clock.
+        pattern="testsrc",
     ),
     Channel(
         id="fake5",
@@ -148,6 +193,7 @@ DEFAULT_CHANNELS = (
         name="Fake Kids",
         profile="kids",
         color="0xc7761b",
+        logo_style="solid",
         tone=784,
         width=854,
         height=480,
@@ -158,6 +204,7 @@ DEFAULT_CHANNELS = (
         name="Fake Retro",
         profile="retro",
         color="0x4a4a4a",
+        logo_style="light-on-transparent",
         tone=294,
         width=640,
         height=480,
@@ -212,6 +259,12 @@ def parse_channel(raw: dict[str, Any], index: int) -> Channel:
     raw["id"] = str(raw["id"])
     if "/" in raw["id"] or not raw["id"].strip():
         raise ConfigError(f"channels[{index}].id must be non-empty and contain no '/'")
+    style = raw.get("logo_style", DEFAULT_LOGO_STYLE)
+    if style not in LOGO_STYLES:
+        raise ConfigError(
+            f"channels[{index}].logo_style must be one of "
+            f"{', '.join(sorted(LOGO_STYLES))} (got {style!r})"
+        )
     return _apply(Channel(id=raw["id"], number=raw["number"], name=""), raw, f"channels[{index}]")
 
 

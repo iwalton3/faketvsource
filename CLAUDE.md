@@ -61,6 +61,17 @@ to looking for `movie`, `news`, `sports`, and `kids`/`family`/`children` in the
 XMLTV categories to set `IsMovie`/`IsNews`/`IsSports`/`IsKids`. Renaming a
 profile's categories silently drops those flags.
 
+**The logos are meant to be hostile.** Four of the six ship with a fully
+transparent background, two with white text and two with black, so no single
+background colour renders the whole lineup. That is the feature: a client that
+composites logos badly is supposed to fail here. Do not "fix" the lineup by
+making them all opaque, and do not make the transparent styles legible by
+adding a shadow or an outline — that is exactly the accommodation a client
+ought to be making for itself. `test_images.py` fails if the lineup stops
+covering all four styles or loses either the white- or the black-text
+transparent case. The landing page is the one place that composites them onto
+a mid-tone checker, because that is what correct handling looks like.
+
 **The HDHomeRun model number must contain `hdtc`.** Jellyfin decides a device
 can transcode by substring-matching that, which is what makes it offer the
 alternate quality media sources that `?transcode=<profile>` serves.
@@ -78,6 +89,12 @@ encoder. There is a test for the hostile-name case; keep it passing.
 and `%{gmtime}` are fine. `%{localtime:%H\:%M}` is not — the escaping that works
 through a shell does not work when the filter is passed as an argv element, and
 it fails at filter-parse time with a confusing "No option name near" error.
+
+**A transparent background needs `format=rgba` *and* `-pix_fmt rgba`.** The
+`color` source picks its pixel format by negotiation, so `color=c=black@0`
+alone gets flattened onto opaque black without a word of complaint — and the
+resulting logo looks perfectly fine, which is how it goes unnoticed. Both ends
+are set in `ImageFactory._command`, and `test_images.py` checks both.
 
 **The muxer options are `-metadata service_name=` / `service_provider=`.** There
 is no `-mpegts_service_name`.

@@ -40,6 +40,8 @@
       "profile": "general",
       "group": "Fake TV",
       "color": "0x1b5e9c",
+      "_logo_style": "solid | light-on-transparent | dark-on-transparent | translucent. The non-solid ones have no background of their own, which is what makes them worth testing.",
+      "logo_style": "light-on-transparent",
       "tone": 440
     },
     {
@@ -49,6 +51,7 @@
       "profile": "news",
       "group": "Fake TV",
       "color": "0xb02a2a",
+      "logo_style": "dark-on-transparent",
       "tone": 523,
       "width": 1920,
       "height": 1080,
@@ -61,6 +64,7 @@
       "profile": "movies",
       "group": "Fake TV",
       "color": "0x3d2a6b",
+      "logo_style": "translucent",
       "tone": 349,
       "width": 1920,
       "height": 1080
@@ -72,7 +76,9 @@
       "profile": "sports",
       "group": "Fake TV",
       "color": "0x1f7a3d",
-      "tone": 659
+      "logo_style": "dark-on-transparent",
+      "tone": 659,
+      "pattern": "testsrc"
     },
     {
       "id": "fake5",
@@ -81,6 +87,7 @@
       "profile": "kids",
       "group": "Fake TV",
       "color": "0xc7761b",
+      "logo_style": "solid",
       "tone": 784,
       "width": 854,
       "height": 480
@@ -92,6 +99,7 @@
       "profile": "retro",
       "group": "Fake TV",
       "color": "0x4a4a4a",
+      "logo_style": "light-on-transparent",
       "tone": 294,
       "width": 640,
       "height": 480,

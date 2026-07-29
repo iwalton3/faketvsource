@@ -78,14 +78,14 @@ Then run **Refresh Guide Data** in Scheduled Tasks and the guide fills in.
 The default lineup is deliberately mixed, so clients get pushed through
 different paths:
 
-| No. | Channel | Content | Video |
-| --- | --- | --- | --- |
-| 1.1 | Fake One HD | mixed series | 1280×720 testsrc2 |
-| 2.1 | Fake News 24 | news, mostly live | 1920×1080 SMPTE HD bars |
-| 3.1 | Fake Movies | films with years and star ratings | 1920×1080 testsrc2 |
-| 4.1 | Fake Sports | long live events | 1280×720 testsrc2 |
-| 5.1 | Fake Kids | short episodes | 854×480 testsrc2 |
-| 6.1 | Fake Retro | repeats | 640×480 SMPTE bars |
+| No. | Channel | Content | Video | Logo |
+| --- | --- | --- | --- | --- |
+| 1.1 | Fake One HD | mixed series | 1280×720 testsrc2 | white on transparent |
+| 2.1 | Fake News 24 | news, mostly live | 1920×1080 SMPTE HD bars | black on transparent |
+| 3.1 | Fake Movies | films with years and star ratings | 1920×1080 testsrc2 | 35% translucent |
+| 4.1 | Fake Sports | long live events | 1280×720 testsrc | black on transparent |
+| 5.1 | Fake Kids | short episodes | 854×480 testsrc2 | opaque (the control) |
+| 6.1 | Fake Retro | repeats | 640×480 SMPTE bars | white on transparent |
 
 Guide entries carry the metadata Jellyfin actually looks at: categories that
 trip its news/sports/kids/movie flags, season and episode numbers, episode
@@ -97,6 +97,16 @@ Each channel has its own audio tone, so you can hear which one is playing.
 
 A few things worth deliberately breaking:
 
+- **Logos that fight back.** Real broadcaster logos are alpha PNGs with no idea
+  what they will be drawn on, and a fair number of them are a flat white or
+  flat black wordmark with nothing behind it. So most of these are too: four of
+  the six are fully transparent, two of those white and two black. A client
+  that composites them onto its theme colour, or that assumes a logo brings its
+  own background, shows an invisible logo in one theme and a fine one in the
+  other — light mode loses 1.1 and 6.1, dark mode loses 2.1 and 4.1. 5.1 is
+  opaque as a control, and 3.1 is 35% translucent, which catches clients that
+  treat alpha as a 1-bit mask or flatten onto black before scaling. Set every
+  channel's `logo_style` to `solid` if you want the polite version back.
 - **Tuner exhaustion.** Set `tuner_count` to 1 or 2 and tune more channels than
   that; the server answers `503` exactly like a tuner that's out of capacity.
 - **Quality switching.** The fake HDHomeRun claims a transcoding-capable model,
@@ -128,11 +138,13 @@ yourself comments.
 | `audio.*` | 128k AAC, `mode: tone` | `tone`, `beep` or `silence` |
 | `channels[]` | six fake channels | see below |
 
-A channel takes `id`, `number`, `name`, `group`, `profile`, `color`, `tone`,
-and optional `width`/`height`/`pattern` overrides. `profile` picks the kind of
-schedule generated for it: `general`, `news`, `movies`, `sports`, `kids` or
-`retro`. `pattern` is any lavfi video source — `testsrc2`, `smptebars`,
-`smptehdbars`, `rgbtestsrc`, `color=c=blue`.
+A channel takes `id`, `number`, `name`, `group`, `profile`, `color`,
+`logo_style`, `tone`, and optional `width`/`height`/`pattern` overrides.
+`profile` picks the kind of schedule generated for it: `general`, `news`,
+`movies`, `sports`, `kids` or `retro`. `logo_style` picks how the logo is
+painted: `solid`, `light-on-transparent`, `dark-on-transparent` or
+`translucent`. `pattern` is any lavfi video source — `testsrc`, `testsrc2`,
+`smptebars`, `smptehdbars`, `rgbtestsrc`, `color=c=blue`.
 
 The `id` is what ties a channel to its guide listings and to its stream URL, so
 changing it re-imports the channel as a new one in Jellyfin.

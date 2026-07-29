@@ -15,7 +15,7 @@ import tempfile
 import textwrap
 import threading
 
-from .config import Channel, Config
+from .config import DEFAULT_LOGO_STYLE, LOGO_STYLES, Channel, Config, LogoStyle
 from .encoder import escape_filter_value
 from .schedule import PROFILES
 from .xmltv import art_key
@@ -43,6 +43,21 @@ def _colour_for(key: str) -> str:
     return PALETTE[digest[0] % len(PALETTE)]
 
 
+def logo_style_for(channel: Channel) -> LogoStyle:
+    return LOGO_STYLES.get(channel.logo_style, LOGO_STYLES[DEFAULT_LOGO_STYLE])
+
+
+def logo_paint(channel: Channel) -> tuple[str, str]:
+    """Return the (lavfi background, drawtext fontcolor) for a channel's logo.
+
+    The background carries an explicit alpha even when it is 1.0, so the
+    transparent styles differ from the opaque ones by nothing but a number.
+    """
+    style = logo_style_for(channel)
+    fill = channel.color if style.fill == "channel" else style.fill
+    return f"{fill}@{style.alpha:g}", style.text
+
+
 class ImageFactory:
     """Renders and caches PNGs."""
 
@@ -52,13 +67,17 @@ class ImageFactory:
         self._cache: dict[str, bytes] = {}
 
     def logo(self, channel: Channel) -> bytes | None:
+        background, text_colour = logo_paint(channel)
+        transparent = logo_style_for(channel).alpha < 1.0
         return self._cached(
-            f"logo:{channel.id}",
+            f"logo:{channel.id}:{channel.logo_style}",
             lambda: self._render(
                 400,
                 400,
-                channel.color,
+                background,
                 [(channel.number, 96), (channel.name, 38)],
+                text_colour=text_colour,
+                alpha=transparent,
             ),
         )
 
@@ -96,15 +115,48 @@ class ImageFactory:
                 self._cache[key] = data
         return data
 
+    def _command(
+        self,
+        width: int,
+        height: int,
+        background: str,
+        filters: list[str],
+        alpha: bool,
+    ) -> list[str]:
+        """Build the ffmpeg argv for one still.
+
+        `color` only carries an alpha channel if something downstream asks for
+        a pixel format that has one, so a transparent background needs both the
+        `format=rgba` on the source and the matching `-pix_fmt` on the encoder.
+        Without either, the alpha is silently flattened onto black.
+        """
+        source = f"color=c={background}:s={width}x{height}"
+        if alpha:
+            source += ",format=rgba"
+        command = [
+            self.config.ffmpeg,
+            "-hide_banner", "-nostdin", "-loglevel", "error",
+            "-f", "lavfi",
+            "-i", source,
+            "-vf", ",".join(filters),
+            "-frames:v", "1",
+            "-c:v", "png",
+        ]
+        if alpha:
+            command += ["-pix_fmt", "rgba"]
+        return command + ["-f", "image2", "pipe:1"]
+
     def _render(
         self,
         width: int,
         height: int,
-        colour: str,
+        background: str,
         blocks: list[tuple[str, int]],
         wrap: int = 16,
+        text_colour: str = "white",
+        alpha: bool = False,
     ) -> bytes:
-        """Draw stacked lines of text on a solid background."""
+        """Draw stacked lines of text on a background of the given colour."""
         # Text goes through files rather than the filter string so titles with
         # colons, quotes or commas cannot corrupt the filter graph.
         handles: list[str] = []
@@ -125,7 +177,7 @@ class ImageFactory:
                     f"textfile={escape_filter_value(path)}",
                     "expansion=none",
                     f"fontsize={size}",
-                    "fontcolor=white",
+                    f"fontcolor={text_colour}",
                     "line_spacing=8",
                     "x=(w-tw)/2",
                     f"y=(h-th)/2{sign}{abs(offset):.0f}",
@@ -136,17 +188,7 @@ class ImageFactory:
                     options.append("font=sans")
                 filters.append("drawtext=" + ":".join(options))
 
-            command = [
-                self.config.ffmpeg,
-                "-hide_banner", "-nostdin", "-loglevel", "error",
-                "-f", "lavfi",
-                "-i", f"color=c={colour}:s={width}x{height}",
-                "-vf", ",".join(filters),
-                "-frames:v", "1",
-                "-c:v", "png",
-                "-f", "image2",
-                "pipe:1",
-            ]
+            command = self._command(width, height, background, filters, alpha)
             result = subprocess.run(
                 command,
                 stdout=subprocess.PIPE,
